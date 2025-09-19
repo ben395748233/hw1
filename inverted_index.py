@@ -101,23 +101,34 @@ class InvertedIndex:
 
     def process_query(self, keywords):
         """
-        Processes the given keyword query as follows: Fetches the inverted list
-        for each of the keywords in the given query and computes the
-        intersection of all inverted lists (which is empty, if there is a
-        keyword in the query which has no inverted list in the index).
-
-        >>> ii = InvertedIndex()
-        >>> ii.build_from_file("example.tsv")
-        >>> ii.process_query([])
-        []
-        >>> ii.process_query(["doc"])
-        [1, 2, 3]
-        >>> ii.process_query(["doc", "movie"])
-        [1, 3]
-        >>> ii.process_query(["doc", "movie", "comedy"])
-        []
+        Processes the given keyword query:
+        - Fetch inverted list for each keyword (case-insensitive).
+        - If any keyword is missing, return [].
+        - Intersect all lists using self.intersect.
         """
-        pass  # TODO: add your code here
+        # 空查詢 → 空結果（符合 doctest）
+        if not keywords:
+            return []
+
+        # 依序抓倒排列表；若有缺少的關鍵字，直接空集合
+        lists = []
+        for kw in keywords:
+            kw = kw.lower()
+            lst = self.inverted_lists.get(kw)
+            if not lst:
+                return []
+            lists.append(lst)
+
+        # 先交集最短的，減少中間結果大小
+        lists.sort(key=len)
+
+        # 逐一交集（使用上題的 intersect，線性合併）
+        result = lists[0]
+        for lst in lists[1:]:
+            result = self.intersect(result, lst)
+            if not result:      # 交集已空，提前結束
+                break
+        return result
 
 
 def main():
