@@ -140,7 +140,7 @@ def main():
     # Parse the command line arguments.
     if len(sys.argv) != 2:
         print("Usage: python3 %s <file>" % sys.argv[0])
-        sys.exit()
+        sys.exit(1)
 
     file_name = sys.argv[1]
 
@@ -148,14 +148,36 @@ def main():
     print("Reading from file '%s'." % file_name)
     ii = InvertedIndex()
     ii.build_from_file(file_name)
-    print(ii.inverted_lists)
-    
-    # #Zif's law
-    # for word, inverted_list in ii.inverted_lists.items():
-    #     print("%d\t%s" % (len(inverted_list), word))
 
+    # Interactive query loop
+    print("Enter keywords separated by spaces (type 'quit' to exit).")
+    while True:
+        try:
+            q = input("query> ")
+        except (EOFError, KeyboardInterrupt):
+            print("\nBye.")
+            break
 
-    # TODO: add your code here
+        if q is None:
+            continue
+        q = q.replace("\u00A0", " ").replace("\u3000", " ").strip()  # 防 NBSP/全形空白
+        if not q:
+            continue
+        if q.lower() in {"quit", "exit", ":q"}:
+            print("Bye.")
+            break
+
+        keywords = re.split(r"\s+", q)
+        rids = ii.process_query(keywords)
+
+        if not rids:
+            print("(no results)")
+            continue
+
+        for rid in rids[:3]:
+            title, desc = ii.docs[rid - 1]  # record_id 是 1-based
+            print(f"{title}\t{desc}")
+
 
 
 if __name__ == "__main__":
