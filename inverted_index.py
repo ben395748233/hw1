@@ -79,16 +79,25 @@ class InvertedIndex:
 
     def intersect(self, list1, list2):
         """
-        Computes the intersection of the two given inverted lists in linear
-        time (linear in the total number of elements in the two lists).
-
-        >>> ii = InvertedIndex()
-        >>> ii.intersect([1, 5, 7], [2, 4])
-        []
-        >>> ii.intersect([1, 2, 5, 7], [1, 3, 5, 6, 7, 9])
-        [1, 5, 7]
-        """
-        pass  # TODO: add your code here
+    Computes the intersection of two sorted inverted lists in linear time.
+    Precondition: list1 and list2 are strictly increasing lists of integers.
+    """
+        i, j = 0, 0
+        n1, n2 = len(list1), len(list2)
+        out = []
+        while i < n1 and j < n2:
+            a = list1[i]
+            b = list2[j]
+            if a == b:
+                if not out or out[-1] != a:  
+                    out.append(a)
+                i += 1
+                j += 1
+            elif a < b:
+                i += 1
+            else:
+                j += 1
+        return out
 
     def process_query(self, keywords):
         """
