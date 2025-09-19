@@ -16,6 +16,7 @@ class InvertedIndex:
         Creates an empty inverted index.
         """
         self.inverted_lists = {}  # The inverted lists of record ids.
+        self.docs = []
 
     def build_from_file(self, file_name):
         """
@@ -34,9 +35,11 @@ class InvertedIndex:
         >>> sorted(ii.inverted_lists.items())
         [('a', [1, 2]), ('doc', [1, 2, 3]), ('film', [2]), ('movie', [1, 3])]
         """
-        with open(file_name, "r") as file:
+        with open(file_name, "r",newline="") as file:
             record_id = 0
             for line in file:
+                record_id += 1
+                line = line.strip()
                 # Get the title and the text
                 # title, text, rest = line.split("\t", 2)
                 #print("%s %s" % (title, text)
@@ -47,20 +50,32 @@ class InvertedIndex:
                 # for word in re.split("[^A-Za-z]+", text):
                 #     print(word)
 
-                line = line.strip()
-                record_id += 1
+                
+                
 
-                for word in re.split("[^A-Za-z]+", line):
+                parts = line.split("\t", 4)
+                title = parts[0] if len(parts) > 0 else ""
+                description = parts[1] if len(parts) > 1 else ""
+                self.docs.append((title, description))
+
+                text = f"{title} {description}"
+                
+
+                seen_in_record = set() 
+                for word in re.split("[^A-Za-z]+", text):
                     word = word.lower().strip()
-
-                    # Ignore the word if it is empty.
-                    if len(word) == 0:
+                    if not word:
                         continue
+                    if word in seen_in_record:
+                        continue
+                    seen_in_record.add(word)
 
-                    if word not in self.inverted_lists:
-                        # The word is seen for first time, create a new list.
-                        self.inverted_lists[word] = []
-                    self.inverted_lists[word].append(record_id)
+                    lst = self.inverted_lists.get(word)
+                    if lst is None:
+                        self.inverted_lists[word] = [record_id]
+                    else:
+                        if not lst or lst[-1] != record_id:
+                            lst.append(record_id)
 
     def intersect(self, list1, list2):
         """
