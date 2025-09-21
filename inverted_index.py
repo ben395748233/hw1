@@ -11,14 +11,14 @@ class InvertedIndex:
     A simple inverted index as explained in lecture.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Creates an empty inverted index.
         """
-        self.inverted_lists = {}  # The inverted lists of record ids.
-        self.docs = []
+        self.inverted_lists: dict[str, list[int]] = {}  # The inverted lists of record ids.
+        self.docs: list[tuple[str, str, str, str, str]] = []
 
-    def build_from_file(self, file_name):
+    def build_from_file(self, file_name: str)-> None:
         """
         Constructs the inverted index from given file in linear time 
         (linear in the number of words in the file). 
@@ -53,41 +53,44 @@ class InvertedIndex:
                 
                 
 
-                parts = line.split("\t", 4)
-                title = parts[0] if len(parts) > 0 else ""
-                description = parts[1] if len(parts) > 1 else ""
-                self.docs.append((title, description))
+                parts: list[str] = line.split("\t", 4)
+                title: str = parts[0] if len(parts) > 0 else ""
+                description: str = parts[1] if len(parts) > 1 else ""
+                large: str = parts[2] if len(parts) > 2 else ""
+                float_i: str = parts[3] if len(parts) > 3 else ""
+                integer: str = parts[4] if len(parts) > 4 else ""
+                self.docs.append((title, description, large, float_i, integer))
 
-                text = f"{title} {description}"
+                text: str = f"{title} {description} {large} {float_i} {integer}"
                 
 
-                seen_in_record = set() 
-                for word in re.split("[^A-Za-z]+", text):
-                    word = word.lower().strip()
+                seen_in_record: set[str] = set() 
+                for word in re.split("[^A-Za-z0-9]+", text):
+                    word: str = word.lower().strip()
                     if not word:
                         continue
                     if word in seen_in_record:
                         continue
                     seen_in_record.add(word)
 
-                    lst = self.inverted_lists.get(word)
+                    lst: list[int] | None = self.inverted_lists.get(word)
                     if lst is None:
                         self.inverted_lists[word] = [record_id]
                     else:
                         if not lst or lst[-1] != record_id:
                             lst.append(record_id)
 
-    def intersect(self, list1, list2):
+    def intersect(self, list1: list[int], list2: list[int]) -> list[int]:
         """
-    Computes the intersection of two sorted inverted lists in linear time.
-    Precondition: list1 and list2 are strictly increasing lists of integers.
-    """
+        Computes the intersection of two sorted inverted lists in linear time.
+        Precondition: list1 and list2 are strictly increasing lists of integers.
+        """
         i, j = 0, 0
         n1, n2 = len(list1), len(list2)
-        out = []
+        out: list[int] | None = []
         while i < n1 and j < n2:
-            a = list1[i]
-            b = list2[j]
+            a: int = list1[i]
+            b: int = list2[j]
             if a == b:
                 if not out or out[-1] != a:  
                     out.append(a)
@@ -99,7 +102,7 @@ class InvertedIndex:
                 j += 1
         return out
 
-    def process_query(self, keywords):
+    def process_query(self, keywords: list[str])-> list[int] | None:
         """
         Processes the given keyword query:
         - Fetch inverted list for each keyword (case-insensitive).
@@ -111,10 +114,10 @@ class InvertedIndex:
             return []
 
         # 依序抓倒排列表；若有缺少的關鍵字，直接空集合
-        lists = []
+        lists: list[list[int]] = []
         for kw in keywords:
-            kw = kw.lower()
-            lst = self.inverted_lists.get(kw)
+            kw: str = kw.lower()
+            lst: list[int] | None = self.inverted_lists.get(kw)
             if not lst:
                 return []
             lists.append(lst)
@@ -123,7 +126,7 @@ class InvertedIndex:
         lists.sort(key=len)
 
         # 逐一交集（使用上題的 intersect，線性合併）
-        result = lists[0]
+        result: list[int] = lists[0]
         for lst in lists[1:]:
             result = self.intersect(result, lst)
             if not result:      # 交集已空，提前結束
@@ -131,7 +134,7 @@ class InvertedIndex:
         return result
 
 
-def main():
+def main() -> None:
     """
     Constructs an inverted index from a given text file, then asks the user in
     an infinite loop for keyword queries and outputs the title and description
@@ -142,7 +145,7 @@ def main():
         print("Usage: python3 %s <file>" % sys.argv[0])
         sys.exit(1)
 
-    file_name = sys.argv[1]
+    file_name: str = sys.argv[1]
 
     # Create a new inverted index from the given file.
     print("Reading from file '%s'." % file_name)
@@ -153,13 +156,11 @@ def main():
     print("Enter keywords separated by spaces (type 'quit' to exit).")
     while True:
         try:
-            q = input("query> ")
+            q: str = input("query> ")
         except (EOFError, KeyboardInterrupt):
             print("\nBye.")
             break
 
-        if q is None:
-            continue
         q = q.replace("\u00A0", " ").replace("\u3000", " ").strip()  # 防 NBSP/全形空白
         if not q:
             continue
@@ -167,16 +168,16 @@ def main():
             print("Bye.")
             break
 
-        keywords = re.split(r"\s+", q)
-        rids = ii.process_query(keywords)
+        keywords: list[str] = re.split(r"\s+", q)
+        rids: list[int] | None = ii.process_query(keywords)
 
         if not rids:
             print("(no results)")
             continue
 
-        for rid in rids[:3]:
-            title, desc = ii.docs[rid - 1]  # record_id 是 1-based
-            print(f"{title}\t{desc}")
+        for rid in rids[:4]:
+            title, desc, large, float_i, integer = ii.docs[rid - 1]  # record_id 是 1-based
+            print(f"Title:\t{title}\nDescription:\t{desc}\nCol3:\t{large}\nCol4:\t{float_i}\nCol5:\t{integer}")
 
 
 
