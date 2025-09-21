@@ -175,7 +175,7 @@ def main() -> None:
             print("(no results)")
             continue
 
-        for rid in rids[:4]:
+        for rid in rids:
             title, desc, large, float_i, integer = ii.docs[rid - 1]  # record_id 是 1-based
             print(f"Title:\t{title}\nDescription:\t{desc}\nCol3:\t{large}\nCol4:\t{float_i}\nCol5:\t{integer}")
 
